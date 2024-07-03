@@ -1,8 +1,4 @@
 ### Oracle 12c config ###
-Password : Test1234
-
-create vitual account Password : Test123456
-
 1. Open CMD mode and check database  [sqlplus /nolog]
 2. Connect sys database[conn sys/Test123456 as sysdba]
 3. Show pdbs;
@@ -15,17 +11,16 @@ create vitual account Password : Test123456
 
 10. conn TestDB/Test123@ORCL
 
-impdp TESTDB/Test123@localhost/ORCL schemas=TESTDB directory=oracle_database dumpfile=26_06_2024_23_40.DMP logfile=impdp.log
 
 E:\app\oracledbjoy\product\12.2.0\dbhome_1\network\admin
 
 create user DEVELOPERS identified by Test1234
-
+create user RESALE identified by resale
 
 SELECT mode_type from SAL_LEADS_GEN where mode_type IN ('Hot', 'Warm', 'Cold');
 Update SAL_LEADS_GEN set mode_type = 'Q0' where mode_type IN ('Hot', 'Warm', 'Cold');
 
-EXCEL DATA ="'"&A1&"',"
+***EXCEL DATA ="'"&A1&"',"
 
 
 sqlplus /nolog;
@@ -41,13 +36,15 @@ select * from dba_users where username = 'DEVELOPERS';
 alter system flush shared_pool;
 ==========================================
 
-====== ORACLE database path create or drop for import file =======
+***====== ORACLE database path create or drop for IMPORT OR EXPORT file =======***
+*SELECT directory_name, directory_path FROM all_directories; ---> CHECK ALL DIRECTORIES
 1.CREATE OR REPLACE DIRECTORY ORACLE_DATABASE AS 'E:\ORACLE_DATABASE';
-2.GRANT READ, WRITE ON DIRECTORY ORACLE_DATABASE TO DEVELOPERS;
-****which database will be imported user will be created same like as imported database.****
-impdp SYS/Test123456@ORCL as SYSDBA dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
+2.GRANT READ, WRITE ON DIRECTORY ORACLE_DATABASE TO DEVELOPERS; ---> HERE access  this path which user 
+*which database will be imported user will be created same like as imported database.
+impdp SYS/Test123456@ORCL dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
 if want to user id & password that will be DEVELOPERS user& password.
-====== ORACLE database path create or drop for import file =======
+
+***======  =======***
 
 ***===== CREATE USER ONLY FOR READ ACCESS ====***
 BEGIN
@@ -62,6 +59,7 @@ END;
 ***===== CREATE USER ONLY FOR READ ACCESS ====***
 
 -- Connect to the database as the DEVELOPERS user
+sys/Test123456
 sqlplus DEVELOPERS/Test1234@ORCL
 sqlplus joy/Test123@ORCL
 

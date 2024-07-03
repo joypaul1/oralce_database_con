@@ -1,16 +1,26 @@
+### Oracle 12c config ###
+1. Open CMD mode and check database  [sqlplus /nolog]
+2. Connect sys database[conn sys/Test123456 as sysdba]
+3. Show pdbs;
+4. alter pluggable database all open;
+5. alter session set "_ORACLE_SCRIPT"=true; 
+6. create user TestDB identified by Test123;
+7. GRANT CREATE SESSION TO TestDB;
+8. grant connect to TestDB;
+9. grant all privileges to TestDB;
+
+10. conn TestDB/Test123@ORCL
 impdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=TEST_DATA.dmp directory=DATA_PUMP_DIR REMAP_SCHEMA=developers2:DEVELOPERS
 
 impdp TESTDB/Test123@localhost/ORCL schemas=TESTDB dumpfile=26_06_2024_23_40.dmp directory=E:\oracle_database REMAP_SCHEMA=TESTDB:26_06_2024_23_40
 
 impdp TestDB/Test123@localhost/ORCL schemas=TESTDB directory=E:\oracle_database dumpfile=26_06_2024_23_40.DMP logfile=impdp.log
 
-impdp TestDB/Test123@localhost/ORCL schemas=orcledbjoy directory=E:\oracle_database dumpfile=26_06_2024_23_40.DMP logfile=impdp.log
-
 impdp system/password@ORCL11 schemas=atgdb_cata dumpfile=MYDATA.dmp logfile=log.txt remap_schema=atgdb_cata:cata
 
 impdp SYS/Test123456 dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
-
-impdp SYS/Test123456@ORCL dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
+impdp SYS/Test123456 dumpfile=MYDATA.DMP directory=RESALE_ORACLE_DATABASE
+impdp RESALE/resale@ORCL dumpfile=MYDATA.DMP directory=RESALE_ORACLE_DATABASE
 sqlplus DEVELOPERS/Test1234@ORCL
 
 
@@ -30,3 +40,8 @@ BEGIN
 END;
 /
 oracledbjoy
+
+
+
+expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=bcktst.dmp directory=DATA_PUMP_DIR
+expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=resale_test.dmp directory=RESALE_DATA_PUMP_DIR
