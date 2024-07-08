@@ -8,3 +8,16 @@ How to Un-install oracle 12c
 5.Delete Directory from Start Manu (C:\ProgramData\Microsoft\Windows\Start Menu\Programs)
 6.Clear The Temporary File
 
+*** ---> SEE ALL USER 
+SELECT username FROM dba_users;
+
+====== ORACLE database path create or drop for import file =======
+1.CREATE OR REPLACE DIRECTORY ORACLE_DATABASE AS 'E:\ORACLE_DATABASE';
+2.GRANT READ, WRITE ON DIRECTORY ORACLE_DATABASE TO DEVELOPERS;
+****which database will be imported user will be created same like as imported database.****
+impdp SYS/Test123456@ORCL as SYSDBA dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
+if want to user id & password that will be DEVELOPERS user& password.
+====== ORACLE database path create or drop for import file =======
+
+RMWL-0284:  a0e59eefa9786385
+RMWL-0830: 6e48feaae25ec968

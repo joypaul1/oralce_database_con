@@ -23,18 +23,5 @@ echo "Connected to Oracle DB!";
 
 }
 
-// $allDataSQL  = oci_parse(
-//     $conn,
-//     "SELECT *  FROM PERSONS"
-// );
-
-// oci_execute($allDataSQL);
-// $number = 0;
-// while ($row = oci_fetch_assoc($allDataSQL)) {
-//     print_r($row);
-// }
-
-// Close the Oracle connection
-
 oci_close($conn);
 ?>

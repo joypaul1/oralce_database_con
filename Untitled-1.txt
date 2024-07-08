@@ -5,6 +5,8 @@ impdp TESTDB/Test123@localhost/ORCL schemas=TESTDB dumpfile=26_06_2024_23_40.dmp
 impdp TestDB/Test123@localhost/ORCL schemas=TESTDB directory=E:\oracle_database dumpfile=26_06_2024_23_40.DMP logfile=impdp.log
 
 impdp system/password@ORCL11 schemas=atgdb_cata dumpfile=MYDATA.dmp logfile=log.txt remap_schema=atgdb_cata:cata
+
+
 **** WORKING ****
 impdp SYS/Test123456 dumpfile=MYDATA.DMP directory=ORACLE_DATABASE
 impdp SYS/Test123456 dumpfile=MYDATA.DMP directory=RESALE_ORACLE_DATABASE
@@ -25,7 +27,6 @@ BEGIN
    END LOOP;
 END;
 /
-oracledbjoy
 
 
 

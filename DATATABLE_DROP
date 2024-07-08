@@ -1,0 +1,14 @@
+====== ORACLE DATABASE DROP =======
+SET SERVEROUTPUT ON;
+DECLARE
+    sql_stmt VARCHAR2(200);
+BEGIN
+    FOR t IN (SELECT table_name FROM user_tables) LOOP
+        sql_stmt := 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS';
+        EXECUTE IMMEDIATE sql_stmt;
+        DBMS_OUTPUT.PUT_LINE('Dropped table: ' || t.table_name);
+    END LOOP;
+END;
+/
+====== ORACLE DATATABLE DROP  =======
+
