@@ -1,4 +1,4 @@
-How to Un-install oracle 12c
+****========How to Un-install oracle 12c =====
 
 1.Delete the Enviroment Variable
 2.Delete Registries (cmd -> regedit->HKEY_LOCAL_MATCHINE->SOFTWATE->ORACLE)(cmd -> regedit->HKEY_LOCAL_MATCHINE-SYSTEM->CurrentControlSet->Servies->{All Orcle Related Folder})
@@ -7,9 +7,11 @@ How to Un-install oracle 12c
 4.Delete Directory From Program File (C:\Program Files)
 5.Delete Directory from Start Manu (C:\ProgramData\Microsoft\Windows\Start Menu\Programs)
 6.Clear The Temporary File
+****========How to Un-install oracle 12c =====
 
 *** ---> SEE ALL USER 
 SELECT username FROM dba_users;
+*** ---> SEE ALL USER 
 
 ====== ORACLE database path create or drop for import file =======
 1.CREATE OR REPLACE DIRECTORY ORACLE_DATABASE AS 'E:\ORACLE_DATABASE';
