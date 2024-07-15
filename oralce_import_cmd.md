@@ -37,7 +37,7 @@ Based on this information, here's how you can proceed with running the `impdp` c
    If it doesn't exist, create it:
 
    ```sql
-   CREATE OR REPLACE DIRECTORY DATA_PUMP_DIR AS 'C:\path\to\your\directory';
+   CREATE OR REPLACE DIRECTORY DATA_PUMP_DIR AS 'D:\ORALCE_DATABASE';
    ```
 
    Grant necessary privileges:
