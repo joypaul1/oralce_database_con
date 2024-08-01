@@ -30,5 +30,5 @@ END;
 
 
 
-expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=11_07_2024_joy.dmp directory=DATA_PUMP_DIR
-expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=11_07_2024_joy.dmp directory=RESALE_DATA_PUMP_DIR
+expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=25_07_2024_joy.dmp directory=DATA_PUMP_DIR
+expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=25_07_2024_joy.dmp directory=RESALE_DATA_PUMP_DIR

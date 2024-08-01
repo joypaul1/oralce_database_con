@@ -53,7 +53,7 @@ Based on this information, here's how you can proceed with running the `impdp` c
    DIRECTORY=DATA_PUMP_DIR
    DUMPFILE=MYDATA.DMP
    LOGFILE=imp.log
-   REMAP_SCHEMA=MYDATA:DEVELOPERS
+   REMAP_SCHEMA=MYDATA:DEVELOPERS2
    ```
 
    Adjust `DUMPFILE`, `LOGFILE`, and `REMAP_SCHEMA` as per your specific import requirements.
@@ -65,6 +65,7 @@ Based on this information, here's how you can proceed with running the `impdp` c
    ```shell
    impdp \"SYS/Oralcerangs_2024@ORCL AS SYSDBA\" parfile=D:\impdp_params.par
    ```
+   
 
    Note the use of escaped double quotes (`\"`) around `"SYS/Oralcerangs_2024@ORCL AS SYSDBA"` to ensure it's treated as a single parameter.
 

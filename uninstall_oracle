@@ -21,5 +21,3 @@ impdp SYS/Test123456@ORCL as SYSDBA dumpfile=MYDATA.DMP directory=ORACLE_DATABAS
 if want to user id & password that will be DEVELOPERS user& password.
 ====== ORACLE database path create or drop for import file =======
 
-RMWL-0284:  a0e59eefa9786385
-RMWL-0830: 6e48feaae25ec968
