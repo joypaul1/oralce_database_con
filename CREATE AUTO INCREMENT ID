@@ -12,7 +12,7 @@ BEGIN
   INTO   :new.id
   FROM   dual;
 END;
-/
+/ 
 
 
 --DROP SEQUENCE HR_SLIDER_IMAGE_SEC;
