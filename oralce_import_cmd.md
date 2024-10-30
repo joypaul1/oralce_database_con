@@ -38,12 +38,14 @@ Based on this information, here's how you can proceed with running the `impdp` c
 
    ```sql
    CREATE OR REPLACE DIRECTORY DATA_PUMP_DIR AS 'D:\ORALCE_DATABASE';
+   CREATE OR REPLACE DIRECTORY CSPD_DATA_PUMP_DIR AS 'F:\appsdb12c\Administrator\admin\orcldb\dpdump\cspd_data';
    ```
 
    Grant necessary privileges:
 
    ```sql
    GRANT READ, WRITE ON DIRECTORY DATA_PUMP_DIR TO SYS;
+   GRANT READ, WRITE ON DIRECTORY CSPD_DATA_PUMP_DIR TO SYS;
    ```
 
 5. **Create the Parameter File (`D:\impdp_params.par`):**

@@ -18,7 +18,7 @@ alter system flush shared_pool;
 3. Show pdbs;
 4. alter pluggable database all open;
 
-5.alter session set "_ORACLE_SCRIPT"=true; 
+5.alter session set "_ORACLE_SCRIPT"=true;
 
 6. create user TestDB identified by Test123;
 7. GRANT CREATE SESSION TO TestDB;   grant connect to TestDB;
@@ -39,3 +39,8 @@ Date=20/08/2023
 
 =============
 F:\appsdb12c\Administrator\admin\orcldb\dpdump\F7A5CAF474C84C4498A839E8D45B8390
+
+
+
+1. sqlplus /nolog
+2. conn sys/sys123 as sysdba
