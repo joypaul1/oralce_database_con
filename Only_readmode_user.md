@@ -1,8 +1,8 @@
--- Connect as SYSDBA or a privileged user to grant SELECT ANY TABLE
+### Connect as SYSDBA or a privileged user to grant SELECT ANY TABLE
 sqlplus SYS/Test123456@your_db as SYSDBA
 GRANT SELECT ANY TABLE TO joy;
 
--- Connect as DEVELOPERS user to create public synonyms
+### Connect as DEVELOPERS user to create public synonyms
 sqlplus DEVELOPERS/your_developers_password@your_db
 
 BEGIN
@@ -19,7 +19,7 @@ BEGIN
 END;
 /
  
--- Ensure the privileges are granted explicitly on all objects
+### Ensure the privileges are granted explicitly on all objects
 BEGIN
    FOR t IN (SELECT table_name FROM all_tables WHERE owner = 'DEVELOPERS') LOOP
       EXECUTE IMMEDIATE 'GRANT SELECT ON DEVELOPERS.' || t.table_name || ' TO joy';
@@ -34,7 +34,7 @@ BEGIN
 END;
 /
 
--- Verify access as JOY user
+### Verify access as JOY user
 sqlplus joy/your_joy_password@your_db
 SELECT table_name FROM all_tables WHERE owner = 'DEVELOPERS';
 SELECT view_name FROM all_views WHERE owner = 'DEVELOPERS';
