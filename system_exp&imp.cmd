@@ -30,9 +30,11 @@ END;
 
 
 
-expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=31_10_2024_joy_mrg.dmp directory=DATA_PUMP_DIR
-expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=31_10_2024_joy_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=31_10_2024_joy_mrg.dmp directory=CSPD_DATA_PUMP_DIR
+expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=07_11_2024_joy_mrg.dmp directory=DATA_PUMP_DIR
+expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=07_11_2024_joy_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=07_11_2024_joy_WSHOP_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp LOYALTY/LOYALTYP@10.99.99.20:1525/ORCLPDB dumpfile=07_11_2024_joy_loyalty_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+
 
 expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=31_10_2024_joy_cspd_mrg.dmp directory=RESALE_DATA_PUMP_DIR
 expdp LOYALTY/LOYALTYP@10.99.99.20:1525/ORCLPDB dumpfile=31_10_2024_joy_loyalty_mrg.dmp directory=RESALE_DATA_PUMP_DIR
