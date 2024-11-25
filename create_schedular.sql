@@ -26,3 +26,8 @@ BEGIN
   );
 END;
 /
+
+
+
+SELECT job_name, enabled, last_start_date, next_run_date, last_run_duration
+FROM USER_SCHEDULER_JOBS
