@@ -18,7 +18,6 @@ BEGIN
    END LOOP;
 END;
 /
- 
 ### Ensure the privileges are granted explicitly on all objects
 BEGIN
    FOR t IN (SELECT table_name FROM all_tables WHERE owner = 'DEVELOPERS') LOOP

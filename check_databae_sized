@@ -1,15 +1,13 @@
 To check the total size of an Oracle database, you can use the following queries that provide information on the total space allocated and used:
 
 1. Checking Total Size of the Database
-sql
-Copy code
 SELECT SUM(bytes) / 1024 / 1024 / 1024 AS "Database Size (GB)"
 FROM dba_data_files;
 This query will give you the total size of all data files in the database, measured in gigabytes (GB).
 
 2. Checking the Total Size of the Database (including TEMP files)
-sql
-Copy code
+
+
 SELECT 
     SUM(bytes) / 1024 / 1024 / 1024 AS "Total Size (GB)"
 FROM 
@@ -21,8 +19,8 @@ This version includes temporary files, which can be important for understanding 
 3. Checking Total Space Used and Free Space
 To check the total space used and free space within the database tablespaces:
 
-sql
-Copy code
+
+
 SELECT 
     df.tablespace_name,
     df.total_space / 1024 / 1024 "Total Space (MB)",
@@ -42,7 +40,7 @@ This query provides a breakdown of the used and free space within each tablespac
 4. Checking Database Size from DBA_SEGMENTS
 You can also use DBA_SEGMENTS to get the size of all segments (tables, indexes, etc.):
 
-sql
-Copy code
+
+
 SELECT SUM(bytes) / 1024 / 1024 / 1024 AS "Total Size (GB)"
 FROM dba_segments;
