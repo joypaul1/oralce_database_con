@@ -1,6 +1,4 @@
 PL/SQL Script for Copying Tables
-sql
-
 
 BEGIN
     FOR rec IN (SELECT table_name FROM all_tables WHERE owner = 'DEVELOPERS') LOOP
@@ -9,9 +7,6 @@ BEGIN
 END;
 /
 PL/SQL Script for Copying Views
-sql
-
-
 BEGIN
     FOR rec IN (SELECT view_name FROM all_views WHERE owner = 'DEVELOPERS') LOOP
         EXECUTE IMMEDIATE 'CREATE VIEW DEVELOPERS2.' || rec.view_name || ' AS SELECT * FROM DEVELOPERS.' || rec.view_name;
@@ -84,3 +79,62 @@ BEGIN
     END LOOP;
 END;
 /
+
+
+Script to Copy Only Triggers
+BEGIN
+    -- Copy triggers
+    FOR rec IN (SELECT object_name
+                FROM all_objects
+                WHERE object_type = 'TRIGGER'
+                  AND owner = 'DEVELOPERS') LOOP
+
+        DECLARE
+            v_source_code CLOB;
+        BEGIN
+            -- Extract the trigger source code using DBMS_METADATA.GET_DDL
+            SELECT DBMS_METADATA.GET_DDL('TRIGGER', rec.object_name, 'DEVELOPERS')
+            INTO v_source_code
+            FROM dual;
+
+            -- Replace the schema name from 'DEVELOPERS' to 'DEVELOPERS2'
+            v_source_code := REPLACE(v_source_code, 'DEVELOPERS', 'DEVELOPERS2');
+            
+            -- Execute the DDL to recreate the trigger in DEVELOPERS2
+            EXECUTE IMMEDIATE v_source_code;
+        END;
+    END LOOP;
+END;
+/
+
+
+
+
+if all copy 'PROCEDURE', 'FUNCTION', 'TRIGGER'
+
+
+BEGIN
+    -- Copy procedures and functions
+    FOR rec IN (SELECT object_name, object_type 
+                FROM all_objects 
+                WHERE object_type IN ('PROCEDURE', 'FUNCTION', 'TRIGGER') 
+                  AND owner = 'DEVELOPERS') LOOP
+
+        DECLARE
+            v_source_code CLOB;
+        BEGIN
+            -- Extract the object source code using DBMS_METADATA.GET_DDL
+            SELECT DBMS_METADATA.GET_DDL(rec.object_type, rec.object_name, 'DEVELOPERS')
+            INTO v_source_code
+            FROM dual;
+
+            -- Replace the schema name from 'DEVELOPERS' to 'DEVELOPERS2'
+            v_source_code := REPLACE(v_source_code, 'DEVELOPERS', 'DEVELOPERS2');
+            
+            -- Execute the DDL to recreate the object in DEVELOPERS2
+            EXECUTE IMMEDIATE v_source_code;
+        END;
+    END LOOP;
+END;
+/
+
