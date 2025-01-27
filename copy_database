@@ -1,0 +1,86 @@
+PL/SQL Script for Copying Tables
+sql
+
+
+BEGIN
+    FOR rec IN (SELECT table_name FROM all_tables WHERE owner = 'DEVELOPERS') LOOP
+        EXECUTE IMMEDIATE 'CREATE TABLE DEVELOPERS2.' || rec.table_name || ' AS SELECT * FROM DEVELOPERS.' || rec.table_name;
+    END LOOP;
+END;
+/
+PL/SQL Script for Copying Views
+sql
+
+
+BEGIN
+    FOR rec IN (SELECT view_name FROM all_views WHERE owner = 'DEVELOPERS') LOOP
+        EXECUTE IMMEDIATE 'CREATE VIEW DEVELOPERS2.' || rec.view_name || ' AS SELECT * FROM DEVELOPERS.' || rec.view_name;
+    END LOOP;
+END;
+/
+PL/SQL Script for Copying Sequences
+BEGIN
+    FOR rec IN (SELECT sequence_name, 
+                       min_value, 
+                       max_value, 
+                       increment_by, 
+                       cycle_flag, 
+                       cache_size, 
+                       last_number 
+                FROM all_sequences 
+                WHERE sequence_owner = 'DEVELOPERS') LOOP
+        
+        -- Check if the sequence already exists in DEVELOPERS2 schema
+        DECLARE
+            v_exists NUMBER;
+        BEGIN
+            -- Check if the sequence exists in DEVELOPERS2
+            SELECT COUNT(*)
+            INTO v_exists
+            FROM all_sequences
+            WHERE sequence_owner = 'DEVELOPERS2' 
+              AND sequence_name = rec.sequence_name;
+
+            -- If the sequence exists, drop it
+            IF v_exists > 0 THEN
+                EXECUTE IMMEDIATE 'DROP SEQUENCE DEVELOPERS2.' || rec.sequence_name;
+            END IF;
+        END;
+
+        -- Construct and execute the CREATE SEQUENCE statement
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE DEVELOPERS2.' || rec.sequence_name || 
+                          ' START WITH ' || rec.last_number ||
+                          ' INCREMENT BY ' || rec.increment_by ||
+                          ' MINVALUE ' || rec.min_value ||
+                          ' MAXVALUE ' || rec.max_value ||
+                          ' ' || CASE WHEN rec.cycle_flag = 'Y' THEN 'CYCLE' ELSE 'NOCYCLE' END ||
+                          -- Only add CACHE if cache_size is greater than 1, else set it to 2
+                          CASE WHEN rec.cache_size > 1 THEN ' CACHE ' || rec.cache_size
+                               WHEN rec.cache_size IS NULL OR rec.cache_size <= 1 THEN ' CACHE 2' END;
+    END LOOP;
+END;
+/
+
+
+
+
+
+PL/SQL Script for Copying Procedures/Functions
+sql
+BEGIN
+    FOR rec IN (SELECT object_name, object_type 
+                FROM all_objects 
+                WHERE object_type IN ('PROCEDURE', 'FUNCTION') 
+                  AND owner = 'DEVELOPERS') LOOP
+
+        -- Construct the dynamic SQL based on the object type
+        IF rec.object_type = 'PROCEDURE' THEN
+            EXECUTE IMMEDIATE 'CREATE OR REPLACE PROCEDURE DEVELOPERS2.' || rec.object_name || ' AS ' || 
+                               'SELECT * FROM DEVELOPERS.' || rec.object_name;
+        ELSIF rec.object_type = 'FUNCTION' THEN
+            EXECUTE IMMEDIATE 'CREATE OR REPLACE FUNCTION DEVELOPERS2.' || rec.object_name || ' AS ' ||
+                               'SELECT * FROM DEVELOPERS.' || rec.object_name;
+        END IF;
+    END LOOP;
+END;
+/
