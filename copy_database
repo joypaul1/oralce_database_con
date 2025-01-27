@@ -83,7 +83,6 @@ END;
 
 Script to Copy Only Triggers
 BEGIN
-    -- Copy triggers
     FOR rec IN (SELECT object_name
                 FROM all_objects
                 WHERE object_type = 'TRIGGER'
@@ -92,7 +91,7 @@ BEGIN
         DECLARE
             v_source_code CLOB;
         BEGIN
-            -- Extract the trigger source code using DBMS_METADATA.GET_DDL
+            -- Extract the trigger DDL from DEVELOPERS schema
             SELECT DBMS_METADATA.GET_DDL('TRIGGER', rec.object_name, 'DEVELOPERS')
             INTO v_source_code
             FROM dual;
