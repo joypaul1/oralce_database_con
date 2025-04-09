@@ -1,0 +1,34 @@
+You can choose any domain suffix (e.g., .localdomain, .example.com) as long as each node’s entire hostname is unique. In a lab environment, .localdomain is a common choice. Here are a few tips:
+
+Unique Hostnames for Each Node
+
+racnode1.localdomain
+
+racnode2.localdomain
+
+Private Interconnect
+In an Oracle RAC setup, each node also needs a separate hostname (and IP) for the private interconnect (used by the cluster to communicate internally). Often, people use a “-priv” suffix, for example:
+
+racnode1-priv.localdomain
+
+racnode2-priv.localdomain
+
+VIP Addresses
+Oracle RAC also uses virtual IP addresses/hostnames (VIPs) that fail over between nodes. You might see something like:
+
+racnode1-vip.localdomain
+
+racnode2-vip.localdomain
+
+DNS or /etc/hosts
+Ensure these hostnames resolve correctly across all cluster nodes (either via a local DNS server or entries in /etc/hosts). Each node should be able to resolve:
+
+Its own public name
+
+Its own private name
+
+Its VIP name
+
+The other node’s public, private, and VIP names
+
+So, in the “Network & Host Name” screen, replace the default localhost.localdomain with the public name for this node, such as racnode1.localdomain. You’ll configure the private interconnect and VIP hostnames later, either through additional network adapters or in the /etc/hosts file, depending on how you’re setting up your lab network.

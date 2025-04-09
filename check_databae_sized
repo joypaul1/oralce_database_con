@@ -42,5 +42,4 @@ You can also use DBA_SEGMENTS to get the size of all segments (tables, indexes, 
 
 
 
-SELECT SUM(bytes) / 1024 / 1024 / 1024 AS "Total Size (GB)"
-FROM dba_segments;
+SELECT SUM(bytes) / 1024 / 1024 / 1024 AS "Total Size (GB)" FROM dba_segments;
