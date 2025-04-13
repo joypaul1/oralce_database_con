@@ -11,7 +11,7 @@ impdp RESALE/resale@ORCL dumpfile=MYDATA.DMP directory=RESALE_ORACLE_DATABASE
 
 
 expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_DEVELOPERS_mrg.dmp directory=DATA_PUMP_DIR
-expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_jRESALE_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_RESALE_mrg.dmp directory=RESALE_DATA_PUMP_DIR
 expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_WSHOP_mrg.dmp directory=RESALE_DATA_PUMP_DIR
 expdp LOYALTY/LOYALTYP@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_loyalty_mrg.dmp directory=RESALE_DATA_PUMP_DIR
 expdp COUPON_SERVICE/RMLIT2024CUP@10.99.99.20:1525/ORCLPDB dumpfile=13_02_2025_joy_coupon_mrg.dmp directory=RESALE_DATA_PUMP_DIR
