@@ -30,3 +30,15 @@ WHERE rn = 1
   );
   //----This script is used to insert CODE WISE profile STATUS data into the CODE_WISE_STATUS table.//
 
+********--WORKING PLAN ---- ************
+EMI COLLECTION ENTRY   -> GET LAST LOCATION ON MR CREATE DEPEND ON CODE
+money_collection.php
+
+
+CUSTOMER VISIT ---> CODE VISIT OR NOT
+meet_visit_assign_customer.php
+visit_assign_list.php
+
+///CREDIT CUSTOMER --> EMI VIEW DATA
+ALL CODE -->  CUSTOMER, MOBILE ,LAT & LANG  (PROFILE) (LAST MEET VISIT LOCATION), HISTORY OF LOCATION (3 ATTEMPT)
+REF_CODE -->  REF CODE (++),CUSTOMER_ID
