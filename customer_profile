@@ -9,7 +9,7 @@ FROM (
     WHERE PARTYCDE IS NOT NULL
 )
 WHERE rn = 1
-  AND PARTYCDE NOT IN (
+  AND PARTYCDE NOT IN ( 
       SELECT CUST_CODE FROM CUSTOMER_CODE_PROFILE.CUSTOMER_PROFILE
   );
   //----This script is used to insert customer profile data into the CUSTOMER_PROFILE table.//
@@ -28,10 +28,10 @@ WHERE rn = 1
   AND PARTYCDE NOT IN (
       SELECT CUST_CODE FROM CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS;
   );
-  //----This script is used to insert CODE WISE profile STATUS data into the CODE_WISE_STATUS table.//
+//----This script is used to insert CODE WISE profile STATUS data into the CODE_WISE_STATUS table.//
 
 ********--WORKING PLAN ---- ************
-EMI COLLECTION ENTRY   -> GET LAST LOCATION ON MR CREATE DEPEND ON CODE
+EMI COLLECTION ENTRY   ->  
 money_collection.php
 
 
