@@ -278,7 +278,6 @@ WHERE rn = 1
   );
 
 
-
 INSERT INTO CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS (CUST_CODE, REF_CODE, PAYMENT_MODE, CODE_STATUS,NUMBER_OF_DUE)
 SELECT  PARTYCDE,REF_CODE, SALES_TYPE, STATUS, NUMBER_OF_DUE
 FROM (
@@ -293,22 +292,31 @@ WHERE rn = 1
   );
 
 
-
 /// --insert data into CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS table lat and lang from DEVELOPERS.RML_COLL_CUST_VISIT table
 
-  UPDATE CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS t
-   SET (LAT, LANG) = (
-       SELECT v.LATITUDE, v.LONGITUDE
-         FROM DEVELOPERS.RML_COLL_CUST_VISIT v
-        WHERE v.REF_ID = t.REF_CODE
-          AND v.ID = (
-              SELECT MAX(ID) 
-              FROM DEVELOPERS.RML_COLL_CUST_VISIT
-              WHERE REF_ID = v.REF_ID
-          )
+MERGE INTO CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS dst
+USING (
+    SELECT *
+    FROM (
+        SELECT cws.REF_CODE,
+               v.LATITUDE,
+               v.LONGITUDE,
+               ROW_NUMBER() OVER (ORDER BY cws.REF_CODE) AS rn
+        FROM CUSTOMER_CODE_PROFILE.CODE_WISE_STATUS cws
+        JOIN (
+            SELECT REF_ID, LATITUDE, LONGITUDE,
+                   ROW_NUMBER() OVER (PARTITION BY REF_ID ORDER BY ID DESC) AS rid
+            FROM DEVELOPERS.RML_COLL_CUST_VISIT
+        ) v ON v.REF_ID = cws.REF_CODE
+        WHERE v.rid = 1
     )
- WHERE EXISTS (
-     SELECT 1
-     FROM DEVELOPERS.RML_COLL_CUST_VISIT v
-     WHERE v.REF_ID = t.REF_CODE
-);
+    WHERE rn > 25000 AND rn <= 30000
+) src
+ON (dst.REF_CODE = src.REF_CODE)
+WHEN MATCHED THEN
+UPDATE SET dst.LAT = src.LATITUDE,
+           dst.LANG = src.LONGITUDE;
+
+
+select count (*) from CODE_WISE_STATUS;
+--For example, if you want to skip 20 rows and take 10 rows (rows 21–30): WHERE rn > 20 AND rn <= 30
