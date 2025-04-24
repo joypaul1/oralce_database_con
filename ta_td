@@ -320,3 +320,44 @@ UPDATE SET dst.LAT = src.LATITUDE,
 
 select count (*) from CODE_WISE_STATUS;
 --For example, if you want to skip 20 rows and take 10 rows (rows 21–30): WHERE rn > 20 AND rn <= 30
+
+
+
+CREATE OR REPLACE TRIGGER TRG_AFTER_UPDATE_DISTANCE
+AFTER UPDATE OF ARRIVAL_LAT, ARRIVAL_LANG ON TRAVEL_REQUESTS
+FOR EACH ROW
+WHEN (
+    NEW.ARRIVAL_LAT IS NOT NULL AND 
+    NEW.ARRIVAL_LANG IS NOT NULL AND
+    NEW.DEPARTURE_LAT IS NOT NULL AND 
+    NEW.DEPARTURE_LANG IS NOT NULL
+)
+DECLARE
+    v_lat1   NUMBER := :NEW.DEPARTURE_LAT;
+    v_lon1   NUMBER := :NEW.DEPARTURE_LANG;
+    v_lat2   NUMBER := :NEW.ARRIVAL_LAT;
+    v_lon2   NUMBER := :NEW.ARRIVAL_LANG;
+    v_radius CONSTANT NUMBER := 6371; -- Earth's radius in KM
+    v_dlat   NUMBER;
+    v_dlon   NUMBER;
+    v_a      NUMBER;
+    v_c      NUMBER;
+    v_distance NUMBER;
+BEGIN
+    v_dlat := (v_lat2 - v_lat1) * (ACOS(-1) / 180);
+    v_dlon := (v_lon2 - v_lon1) * (ACOS(-1) / 180);
+
+    v_a := POWER(SIN(v_dlat / 2), 2) +
+           COS(v_lat1 * (ACOS(-1) / 180)) *
+           COS(v_lat2 * (ACOS(-1) / 180)) *
+           POWER(SIN(v_dlon / 2), 2);
+
+    v_c := 2 * ATAN2(SQRT(v_a), SQRT(1 - v_a));
+    v_distance := ROUND(v_radius * v_c, 3);
+
+    -- Now perform an UPDATE (since we can't modify :NEW directly)
+    UPDATE TRAVEL_REQUESTS
+    SET SETTLEMENT_TOTAL_DISTANCE = v_distance
+    WHERE ID = :NEW.ID; -- Assuming "ID" is the PK column
+END;
+/
