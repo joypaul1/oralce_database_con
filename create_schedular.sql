@@ -27,6 +27,20 @@ BEGIN
 END;
 /
 
+BEGIN
+  -- Create the job
+  DBMS_SCHEDULER.create_job (
+    job_name        => 'UPDATE_INVOICE_STATUS_PROC_LEASE_TRANSFER',
+    job_type        => 'PLSQL_BLOCK',
+    job_action      => 'BEGIN LEASE_TRANSFER.UPDATE_INVOICE_STATUS_PROC END;',
+    start_date      => SYSTIMESTAMP,
+    repeat_interval => 'FREQ=HOURLY; INTERVAL=2', -- every 2 hours
+    enabled         => TRUE,
+    comments        => 'Job to update UPDATE_INVOICE_STATUS_PROC sync data every 3 hours'
+  );
+END;
+/
+
 
 
 SELECT job_name, enabled, last_start_date, next_run_date, last_run_duration
