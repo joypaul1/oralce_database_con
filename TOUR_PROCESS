@@ -1,0 +1,36 @@
+/* Formatted on 21/06/2025 12:21:48 PM (QP5 v5.287) */
+SET SERVEROUTPUT ON;
+
+DECLARE
+   V_START_DATE   VARCHAR2 (100);
+   V_END_DATE     VARCHAR2 (100);
+   V_RML_ID       VARCHAR2 (100);
+BEGIN
+   FOR emp_row IN (
+      SELECT ID, RML_ID, START_DATE, END_DATE
+        FROM DEVELOPERS.RML_HR_EMP_TOUR
+       WHERE LINE_MANAGER_APPROVAL_STATUS = 1
+         AND TRUNC(START_DATE) >= TO_DATE('01/05/2025', 'DD/MM/YYYY')
+   ) LOOP
+      -- Use values directly from emp_row
+      V_START_DATE := TO_CHAR(emp_row.START_DATE, 'dd/mm/yyyy');
+      V_END_DATE   := TO_CHAR(emp_row.END_DATE, 'dd/mm/yyyy');
+      V_RML_ID     := emp_row.RML_ID;
+
+      -- Call procedure
+      BEGIN
+         RML_HR_ATTN_PROC (
+            V_RML_ID,
+            TO_DATE(V_START_DATE, 'dd/mm/yyyy'),
+            TO_DATE(V_END_DATE, 'dd/mm/yyyy')
+         );
+
+         DBMS_OUTPUT.PUT_LINE('Processed: ' || V_RML_ID || ' from ' || V_START_DATE || ' to ' || V_END_DATE);
+
+      EXCEPTION
+         WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error for RML_ID ' || V_RML_ID || ': ' || SQLERRM);
+      END;
+   END LOOP;
+END;
+/
