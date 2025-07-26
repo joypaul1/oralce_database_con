@@ -1,0 +1,234 @@
+DROP TRIGGER RML_TA_DA.TRG_BEFORE_INSERT_TRAVEL_REQUESTS;
+
+CREATE OR REPLACE TRIGGER RML_TA_DA.TRG_BEFORE_INSERT_TRAVEL_REQUESTS
+  BEFORE INSERT
+  ON RML_TA_DA.TRAVEL_REQUESTS
+  FOR EACH ROW
+DECLARE
+  v_designation   VARCHAR2(100);
+  v_branch        VARCHAR2(100);
+  v_base_role     VARCHAR2(20);
+  v_metro_area    VARCHAR2(50);
+  v_travel_by     VARCHAR2(50);
+  v_ta_bill       NUMBER := 0;
+
+  PROCEDURE log_dbg(
+    p_step    IN VARCHAR2,
+    p_message IN VARCHAR2
+  ) IS
+    PRAGMA AUTONOMOUS_TRANSACTION;
+  BEGIN
+    INSERT INTO TRIGGER_DEBUG_LOG (
+      TRIGGER_NAME,
+      EMP_ID,
+      STEP_TAG,
+      MESSAGE,
+      LOGGED_AT
+    ) VALUES (
+      'TRG_BEFORE_INSERT_TRAVEL_REQUESTS',
+      :NEW.EMP_ID,
+      p_step,
+      p_message,
+      SYSTIMESTAMP
+    );
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;  -- never fail the trigger because logging broke
+  END log_dbg;
+BEGIN
+  -- 01 Entry
+  log_dbg('01_Start', 'Trigger fired');
+
+  
+  -- 1) set DESIGNATION + BRANCH_NAME 
+
+    BEGIN
+      SELECT DESIGNATION, BRANCH_NAME
+        INTO v_designation, v_branch
+        FROM RML_HR_APPS_USER
+       WHERE RML_ID = :NEW.EMP_ID
+         AND ROWNUM = 1;
+      log_dbg('03_UserOK',
+              'Designation='||v_designation
+            ||', Branch='||v_branch);
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        log_dbg('03_UserErr', 'User not found');
+        RAISE_APPLICATION_ERROR(
+          -20001, 'Employee not found: '||:NEW.EMP_ID
+        );
+    END;
+
+    :NEW.DESIGNATION := v_designation;
+    :NEW.BRANCH_NAME := v_branch;
+     -- 1) end set DESIGNATION + BRANCH_NAME 
+     
+  
+  -- 2)Set metro area
+  
+    v_metro_area := RML_TA_DA.GET_METRO_AREA(:NEW.DEPARTURE_LAT,:NEW.DEPARTURE_LANG);
+    :NEW.METRO_AREA := v_metro_area;
+    log_dbg('02_Metro', 'Metro area='||v_metro_area);
+        -- 2)end metro area
+
+  -- 3) LOCAL TRAVEL 
+  
+    IF UPPER(:NEW.TRAVEL_TYPE) = 'LOCAL'
+        THEN
+            :NEW.TRAVEL_BY := '';
+            IF UPPER(v_designation) LIKE '%MANAGER%' THEN
+                v_base_role := 'Manager';
+                ELSIF UPPER(v_designation) LIKE '%EXECUTIVE%' THEN
+                v_base_role := 'Executive';
+            ELSE
+                v_base_role := 'Others';
+            END IF;
+            log_dbg('BaseRole', 'Base role='||v_base_role);
+            BEGIN
+                SELECT TA_BILL
+                    INTO v_ta_bill
+                    FROM RML_TA_DA.BILLING_CONFIG
+                WHERE DESIGNATION = v_base_role
+                    AND METRO_AREA  = v_metro_area
+                    AND ROWNUM = 1;
+                log_dbg('05_v_ta_bill', 'TA_BILL='||TO_CHAR(v_ta_bill));
+                EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    v_ta_bill := 0;
+                    log_dbg('06_ConfigErr',
+                            'No config for '||v_base_role||','||v_metro_area);
+            END;
+    ELSIF UPPER(:NEW.TRAVEL_TYPE) = 'INTERCITY' THEN
+      log_dbg('03_RateMiss', 'No '||v_travel_by||' rate found');
+            v_travel_by := UPPER(:NEW.TRAVEL_BY);
+            BEGIN
+                SELECT RATE
+                    INTO v_ta_bill
+                    FROM RML_TA_DA.TRAVEL_BY_WISE_RATE
+                WHERE IS_ACTIVE = 1
+                    AND UPPER(TRAVEL_BY) = v_travel_by
+                    AND ROWNUM = 1;
+                log_dbg('03_RateFound', v_travel_by ||' rate='||TO_CHAR(v_ta_bill));
+                EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    v_ta_bill := 0;
+                    log_dbg('03_RateMiss', 'No '||v_travel_by||' rate found');
+            END;
+        log_dbg('TravelBy', :NEW.TRAVEL_BY ||' rate='||TO_CHAR(v_ta_bill));
+    END IF;
+  
+  -- 3) END LOCAL TRAVEL
+  
+  :NEW.SETTLEMENT_DISTANCE_RATE := v_ta_bill;
+  log_dbg('RateAssign','Assigned rate='||TO_CHAR(v_ta_bill));
+
+  
+  -- 05 Exit
+  log_dbg('09_End','Trigger completed');
+END TRG_BEFORE_INSERT_TRAVEL_REQUESTS;
+/
+
+/* Formatted on 26/07/2025 3:19:25 PM (QP5 v5.287) */
+DROP TRIGGER RML_TA_DA.TRG_BEFORE_UPDATE_TRAVEL_REQUESTS;
+
+CREATE OR REPLACE TRIGGER RML_TA_DA.TRG_BEFORE_UPDATE_TRAVEL_REQUESTS
+   BEFORE UPDATE
+   ON RML_TA_DA.TRAVEL_REQUESTS
+   FOR EACH ROW
+DECLARE
+   v_travel_by   VARCHAR2 (50);
+   v_ta_bill     NUMBER := 0;
+BEGIN
+   ----------------------------------------------------------------
+   -- 1) Determine travel mode for LOCAL trips ≥20km
+   ----------------------------------------------------------------
+   IF UPPER (:OLD.TRAVEL_TYPE) = 'LOCAL'
+   THEN
+      IF :OLD.DATA_SOURCE IS NOT NULL
+      THEN
+         IF :NEW.SETTLEMENT_TOTAL_DISTANCE >= 20
+         THEN
+            :NEW.TRAVEL_TYPE := 'INTERCITY';
+            v_travel_by := 'BIKE';
+            :NEW.TRAVEL_BY := v_travel_by;
+
+            BEGIN
+               SELECT RATE
+                 INTO v_ta_bill
+                 FROM RML_TA_DA.TRAVEL_BY_WISE_RATE
+                WHERE     IS_ACTIVE = 1
+                      AND UPPER (TRAVEL_BY) = UPPER (v_travel_by)
+                      AND ROWNUM = 1;
+
+               :NEW.SETTLEMENT_DISTANCE_RATE := v_ta_bill;
+            EXCEPTION
+               WHEN NO_DATA_FOUND
+               THEN
+                  v_ta_bill := 0;
+            END;
+         END IF;
+      ELSE                                              -- DATA_SOURCE IS NULL
+         IF :NEW.SETTLEMENT_TOTAL_DISTANCE >= 20
+         THEN
+            :NEW.TRAVEL_TYPE := 'INTERCITY';
+            v_travel_by := 'BUS';
+            :NEW.TRAVEL_BY := v_travel_by;
+
+            BEGIN
+               SELECT RATE
+                 INTO v_ta_bill
+                 FROM RML_TA_DA.TRAVEL_BY_WISE_RATE
+                WHERE     IS_ACTIVE = 1
+                      AND UPPER (TRAVEL_BY) = UPPER (v_travel_by)
+                      AND ROWNUM = 1;
+
+               :NEW.SETTLEMENT_DISTANCE_RATE := v_ta_bill;
+            EXCEPTION
+               WHEN NO_DATA_FOUND
+               THEN
+                  v_ta_bill := 0;
+            END;
+         END IF;
+      END IF;
+   END IF;
+
+
+
+   IF :NEW.SETTLEMENT_DISTANCE_RATE IS NOT NULL
+   THEN
+      :NEW.SETTLEMENT_AMOUNT :=
+         :NEW.SETTLEMENT_DISTANCE_RATE * :NEW.SETTLEMENT_TOTAL_DISTANCE;
+   ELSE
+      :NEW.SETTLEMENT_AMOUNT :=
+         :OLD.SETTLEMENT_DISTANCE_RATE * :NEW.SETTLEMENT_TOTAL_DISTANCE;
+   END IF;
+END TRG_BEFORE_UPDATE_TRAVEL_REQUESTS;
+/
+
+
+
+UPDATE RML_TA_DA.TRAVEL_REQUESTS tr
+   SET tr.SETTLEMENT_DISTANCE_RATE = (
+       SELECT bc.TA_BILL
+         FROM RML_TA_DA.BILLING_CONFIG bc
+        WHERE bc.DESIGNATION = CASE
+                                WHEN UPPER(tr.DESIGNATION) LIKE '%MANAGER%' THEN 'Manager'
+                                WHEN UPPER(tr.DESIGNATION) LIKE '%EXECUTIVE%' THEN 'Executive'
+                                ELSE 'Others'
+                               END
+          AND bc.METRO_AREA  = tr.METRO_AREA
+          AND ROWNUM = 1
+   )
+ WHERE UPPER(tr.TRAVEL_TYPE) = 'LOCAL';
+
+
+UPDATE RML_TA_DA.TRAVEL_REQUESTS tr
+   SET tr.SETTLEMENT_DISTANCE_RATE = (
+       SELECT twr.RATE
+         FROM RML_TA_DA.TRAVEL_BY_WISE_RATE twr
+        WHERE twr.IS_ACTIVE = 1
+          AND UPPER(twr.TRAVEL_BY) = UPPER(tr.TRAVEL_BY)
+          AND ROWNUM = 1
+   )
+ WHERE UPPER(tr.TRAVEL_TYPE) = 'INTERCITY';
