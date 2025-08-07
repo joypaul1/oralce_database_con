@@ -38,15 +38,13 @@ BEGIN
             HR_USER.EMP_GROUP,
             HR_USER.R_CONCERN AS CONCERN,
 
-            -- Directly from summary table
-            LATE_SUMMARY.TOTAL_PRESENT           AS TOTAL_PRESENT_DAYS,
-            LATE_SUMMARY.UNAUTHORIZE_ABSENT,
-            LATE_SUMMARY.TOTAL_LATE              AS TOTAL_LATE_COUNT,
-            LATE_SUMMARY.DEDUCTION_EL            AS LEVEL_DEDUCTED_COUNT_CUR_MONTH,
+            NVL(LATE_SUMMARY.TOTAL_PRESENT, 0)           AS TOTAL_PRESENT_DAYS,
+            NVL(LATE_SUMMARY.UNAUTHORIZE_ABSENT, 0)      AS UNAUTHORIZED_ABSENT,  -- Alias FIXED
+            NVL(LATE_SUMMARY.TOTAL_LATE, 0)              AS TOTAL_LATE_COUNT,
+            NVL(LATE_SUMMARY.DEDUCTION_EL, 0)            AS LEVEL_DEDUCTED_COUNT_CUR_MONTH,
 
-            -- Unapproved Leave + Tour
             (
-                SELECT COUNT(*) FROM RML_HR_EMP_LEAVE L
+                SELECT COUNT(*) FROM DEVELOPERS.RML_HR_EMP_LEAVE L
                 WHERE L.RML_ID = HR_USER.RML_ID
                   AND L.START_DATE <= TRUNC(SYSDATE)
                   AND L.END_DATE >= TRUNC(SYSDATE, 'MM')
@@ -54,40 +52,40 @@ BEGIN
             )
             +
             (
-                SELECT COUNT(*) FROM RML_HR_EMP_TOUR T
+                SELECT COUNT(*) FROM DEVELOPERS.RML_HR_EMP_TOUR T
                 WHERE T.RML_ID = HR_USER.RML_ID
                   AND T.START_DATE <= TRUNC(SYSDATE)
                   AND T.END_DATE >= TRUNC(SYSDATE, 'MM')
                   AND T.LINE_MANAGER_APPROVAL_STATUS IS NULL
             ) AS UNAPPROVED_LEAVE,
 
-            -- Previous Earned Leave Balance
             (
-                SELECT CARRY_EL
+                SELECT NVL(MAX(CARRY_EL), 0)
                 FROM LATE_POLICY.CARRY_EARN_LEAVE
                 WHERE RML_ID = HR_USER.RML_ID
                   AND YEAR_PERIOD = TO_CHAR(SYSDATE, 'YYYY') - 1
             ) AS PREVIOUS_EARN_LEAVE_BALANCE,
 
-            -- Current Earn Leave Balance
-            (
-                SELECT LEAVE_ASSIGN - LEAVE_TAKEN
-                FROM LEAVE_DETAILS_INFORMATION
+            INT(
+               LATE_SUMMARY.EARN_LEAVE - ( SELECT NVL(MAX(LEAVE_TAKEN), 0)
+                FROM DEVELOPERS.LEAVE_DETAILS_INFORMATION
                 WHERE RML_ID = HR_USER.RML_ID
                   AND LEAVE_PERIOD = TO_CHAR(SYSDATE, 'YYYY')
-                  AND LEAVE_TYPE = 'EL'
+                  AND LEAVE_TYPE = 'EL')
             ) AS CURRENT_EARN_LEAVE_BALANCE
 
-        FROM RML_HR_APPS_USER HR_USER
+        FROM DEVELOPERS.RML_HR_APPS_USER HR_USER
         LEFT JOIN LATE_POLICY.MONTH_WISE_LATE_COUNT_WITH_DEDUCTION_EL LATE_SUMMARY
             ON HR_USER.RML_ID = LATE_SUMMARY.RML_ID 
            AND LATE_SUMMARY.MONTH_PERIOD = p_month_period
         WHERE HR_USER.IS_ACTIVE = 1
     )
     LOOP
-        MERGE INTO HR_MONTHLY_ATTENDANCE_SUMMARY dst
-        USING (SELECT 1 FROM DUAL) src
-        ON (dst.RML_ID = rec.RML_ID AND dst.MONTH_PERIOD = p_month_period)
+        MERGE INTO LATE_POLICY.HR_MONTHLY_ATTENDANCE_SUMMARY dst
+        USING (
+            SELECT rec.RML_ID AS RML_ID, p_month_period AS MONTH_PERIOD FROM DUAL
+        ) src
+        ON (dst.RML_ID = src.RML_ID AND dst.MONTH_PERIOD = src.MONTH_PERIOD)
         WHEN MATCHED THEN
             UPDATE SET
                 EMP_NAME                         = rec.EMP_NAME,
@@ -97,21 +95,21 @@ BEGIN
                 CONCERN                          = rec.CONCERN,
                 TOTAL_PRESENT_DAYS               = rec.TOTAL_PRESENT_DAYS,
                 UNAPPROVED_LEAVE                 = rec.UNAPPROVED_LEAVE,
-                UNAUTHORIZE_ABSENT               = rec.UNAUTHORIZE_ABSENT,
+                UNAUTHORIZED_ABSENT              = rec.UNAUTHORIZED_ABSENT,
                 TOTAL_LATE_COUNT                 = rec.TOTAL_LATE_COUNT,
-                LEVEL_DEDUCTED_COUNT_CUR_MONTH  = rec.LEVEL_DEDUCTED_COUNT_CUR_MONTH,
+                LEVEL_DEDUCTED_COUNT_CUR_MONTH   = rec.LEVEL_DEDUCTED_COUNT_CUR_MONTH,
                 CURRENT_EARN_LEAVE_BALANCE       = rec.CURRENT_EARN_LEAVE_BALANCE,
                 PREVIOUS_EARN_LEAVE_BALANCE      = rec.PREVIOUS_EARN_LEAVE_BALANCE,
                 LAST_UPDATED_AT                  = SYSDATE
         WHEN NOT MATCHED THEN
             INSERT (
                 RML_ID, MONTH_PERIOD, EMP_NAME, DEPT_NAME, DESIGNATION, EMP_GROUP,
-                CONCERN, TOTAL_PRESENT_DAYS, UNAPPROVED_LEAVE, UNAUTHORIZE_ABSENT,
+                CONCERN, TOTAL_PRESENT_DAYS, UNAPPROVED_LEAVE, UNAUTHORIZED_ABSENT,
                 TOTAL_LATE_COUNT, LEVEL_DEDUCTED_COUNT_CUR_MONTH,
                 CURRENT_EARN_LEAVE_BALANCE, PREVIOUS_EARN_LEAVE_BALANCE, LAST_UPDATED_AT
             ) VALUES (
                 rec.RML_ID, p_month_period, rec.EMP_NAME, rec.DEPT_NAME, rec.DESIGNATION, rec.EMP_GROUP,
-                rec.CONCERN, rec.TOTAL_PRESENT_DAYS, rec.UNAPPROVED_LEAVE, rec.UNAUTHORIZE_ABSENT,
+                rec.CONCERN, rec.TOTAL_PRESENT_DAYS, rec.UNAPPROVED_LEAVE, rec.UNAUTHORIZED_ABSENT,
                 rec.TOTAL_LATE_COUNT, rec.LEVEL_DEDUCTED_COUNT_CUR_MONTH,
                 rec.CURRENT_EARN_LEAVE_BALANCE, rec.PREVIOUS_EARN_LEAVE_BALANCE, SYSDATE
             );
@@ -121,8 +119,8 @@ BEGIN
 END;
 /
 
-EXEC UPSERT_MONTHLY_ATTENDANCE_SUMMARY('08-2025');
 
+EXEC UPSERT_MONTHLY_ATTENDANCE_SUMMARY('03-2025');
 
 
 //DONE
@@ -162,7 +160,15 @@ BEGIN
             COUNT(CASE WHEN NVL(b.STATUS, 'A') = 'P' THEN 1 END) AS TOTAL_PRESENT,
 
             -- Absent days
-            COUNT(CASE WHEN NVL(b.STATUS, 'A') = 'A' THEN 1 END) AS UNAUTHORIZE_ABSENT
+            COUNT(CASE WHEN NVL(b.STATUS, 'A') = 'A' THEN 1 END) AS UNAUTHORIZE_ABSENT,
+
+            -- Earn Leave: 18 if DOJ is 12 months before ATTN_DATE's month-end
+            CASE 
+                WHEN a.DOJ IS NOT NULL 
+                     AND LAST_DAY(b.ATTN_DATE) >= ADD_MONTHS(a.DOJ, 12) 
+                THEN 18
+                ELSE 0 
+            END AS EARN_LEAVE
 
         FROM 
             DEVELOPERS.RML_HR_APPS_USER a
@@ -174,7 +180,9 @@ BEGIN
             AND TRUNC(b.ATTN_DATE) BETWEEN TO_DATE('01-05-2025', 'DD-MM-YYYY') AND TRUNC(SYSDATE)
         GROUP BY 
             a.RML_ID,
-            TO_CHAR(b.ATTN_DATE, 'MM-YYYY')
+            TO_CHAR(b.ATTN_DATE, 'MM-YYYY'),
+            a.DOJ,
+            LAST_DAY(b.ATTN_DATE)
     ) src
     ON (
         tgt.RML_ID = src.RML_ID AND tgt.MONTH_PERIOD = src.MONTH_PERIOD
@@ -184,13 +192,14 @@ BEGIN
             tgt.TOTAL_LATE = src.TOTAL_LATE,
             tgt.DEDUCTION_EL = src.DEDUCTION_EL,
             tgt.TOTAL_PRESENT = src.TOTAL_PRESENT,
-            tgt.UNAUTHORIZE_ABSENT = src.UNAUTHORIZE_ABSENT
+            tgt.UNAUTHORIZE_ABSENT = src.UNAUTHORIZE_ABSENT,
+            tgt.EARN_LEAVE = src.EARN_LEAVE
 
     WHEN NOT MATCHED THEN
         INSERT (
-            RML_ID, MONTH_PERIOD, TOTAL_LATE, DEDUCTION_EL, TOTAL_PRESENT, UNAUTHORIZE_ABSENT
+            RML_ID, MONTH_PERIOD, TOTAL_LATE, DEDUCTION_EL, TOTAL_PRESENT, UNAUTHORIZE_ABSENT, EARN_LEAVE
         ) VALUES (
-            src.RML_ID, src.MONTH_PERIOD, src.TOTAL_LATE, src.DEDUCTION_EL, src.TOTAL_PRESENT, src.UNAUTHORIZE_ABSENT
+            src.RML_ID, src.MONTH_PERIOD, src.TOTAL_LATE, src.DEDUCTION_EL, src.TOTAL_PRESENT, src.UNAUTHORIZE_ABSENT, src.EARN_LEAVE
         );
 
     COMMIT;
@@ -200,4 +209,5 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error in PROC_UPDATE_LATE_EL_DEDUCTION: ' || SQLERRM);
 END;
 /
+
 
