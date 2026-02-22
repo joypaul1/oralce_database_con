@@ -1,0 +1,268 @@
+নিচে তোমাদের আজকের পুরো কাজটা “**Run Book / Handover**” স্টাইলে সাজিয়ে দিলাম—তুমি কপি-পেস্ট করে রেখে দিতে পারো।
+
+---
+
+# Garimela SSL Strict Fix — Run Book (2026-01-21)
+
+## Objective
+
+Cloudflare **SSL/TLS mode: Full (Strict)** এ এনে `garimela.com` + `admin.garimela.com` কে **ডাউনটাইম ছাড়াই** চালু করা, এবং ভুল সার্ট (api) serve হওয়া বন্ধ করা।
+
+---
+
+## Initial Problem (What was broken)
+
+* Cloudflare **Flexible** এ চলত
+* **Full / Full (Strict)** দিলে ব্রেক করত
+* কারণ: Origin (Nginx) 443-এ **ভুল/একই সার্ট** serve করছিল (`CN=api.garimela.com`) → hostname mismatch
+
+---
+
+## What We Changed (Summary of Fix)
+
+### 1) New Cloudflare Origin Certificate created (old revoked)
+
+* Cloudflare থেকে **নতুন Origin cert** তৈরি করা হয়েছে (15 years)
+* সার্ভারে নতুন cert/key বসানো হয়েছে
+
+### 2) Correct SNI / SSL vhosts added (No downtime)
+
+* Nginx-এ `garimela.com` + `admin.garimela.com` এর জন্য **নতুন 443 server blocks** যোগ হয়েছে
+* `default.conf` কে **proper IPv4+IPv6 443 default_server** বানানো হয়েছে (ssl_reject_handshake)
+
+### 3) PHP-FPM include fix
+
+* Missing file ছিল: `/etc/nginx/snippets/fastcgi-php.conf`
+* এটা তৈরি করা হয়েছে যাতে admin SSL vhost test pass করে
+
+### 4) Cleanup
+
+* `api.garimela.com` vhost remove করা হয়েছে:
+
+  * `/etc/nginx/sites-enabled/api.garimela.com.conf` deleted
+* Nginx warning clean করা হয়েছে (http2 deprecated + stapling warnings remove)
+* Final: `sudo nginx -t` → **No warnings ✅**
+
+### 5) Final Validation
+
+* Cloudflare Strict ON অবস্থায়:
+
+  * `https://garimela.com` → `HTTP/2 200`
+  * `https://admin.garimela.com` → `HTTP/2 302 /login`
+* Origin cert expiry confirmed:
+
+  * `notAfter=Jan 17 2041 GMT`
+
+---
+
+## Current Working State (As of now)
+
+### Cloudflare
+
+* DNS: `garimela.com` + `www` + `admin` → **Proxied (orange cloud)**
+* SSL/TLS mode: ✅ **Full (Strict)**
+
+### Server
+
+* OS: Ubuntu 24.04, Nginx (CloudPanel style)
+* UFW: 443 open ✅
+
+---
+
+## File Locations (Where everything is)
+
+### SSL cert/key (origin)
+
+* **Origin master files**:
+
+  * `/etc/nginx/ssl/garimela-origin.pem`
+  * `/etc/nginx/ssl/garimela-origin.key` (600 perm)
+
+* **CloudPanel SNI cert directory**:
+
+  * `/etc/nginx/ssl-certificates/garimela.com.crt`
+  * `/etc/nginx/ssl-certificates/garimela.com.key`
+  * `/etc/nginx/ssl-certificates/admin.garimela.com.crt`
+  * `/etc/nginx/ssl-certificates/admin.garimela.com.key`
+
+### Nginx vhost configs
+
+* `/etc/nginx/sites-enabled/default.conf` (443 default_server + reject handshake)
+* `/etc/nginx/sites-enabled/garimela.com.conf` (React SPA + SSL vhosts)
+* `/etc/nginx/sites-enabled/admin.garimela.com.conf` (PHP-FPM + SSL vhost)
+
+### PHP snippet (created)
+
+* `/etc/nginx/snippets/fastcgi-php.conf`
+
+---
+
+## Backups (Rollback safety)
+
+### Old backup (before work)
+
+* `/root/backup-nginx-2026-01-20/{nginx,ssl,www}`
+
+### New “Strict working” backup (after work)
+
+* `/root/backup-nginx-after-strict-2026-01-21/nginx/` (full `/etc/nginx` snapshot)
+
+---
+
+## Commands We Used (Key Steps)
+
+### A) Install/replace Origin cert & key
+
+```bash
+sudo nano /etc/nginx/ssl/garimela-origin.pem
+sudo nano /etc/nginx/ssl/garimela-origin.key
+sudo chmod 600 /etc/nginx/ssl/garimela-origin.key
+```
+
+### B) Copy to CloudPanel SNI path
+
+```bash
+sudo cp /etc/nginx/ssl/garimela-origin.pem /etc/nginx/ssl-certificates/garimela.com.crt
+sudo cp /etc/nginx/ssl/garimela-origin.key /etc/nginx/ssl-certificates/garimela.com.key
+
+sudo cp /etc/nginx/ssl/garimela-origin.pem /etc/nginx/ssl-certificates/admin.garimela.com.crt
+sudo cp /etc/nginx/ssl/garimela-origin.key /etc/nginx/ssl-certificates/admin.garimela.com.key
+
+sudo chmod 600 /etc/nginx/ssl-certificates/garimela.com.key /etc/nginx/ssl-certificates/admin.garimela.com.key
+```
+
+### C) Fix missing php snippet
+
+```bash
+sudo mkdir -p /etc/nginx/snippets
+
+sudo tee /etc/nginx/snippets/fastcgi-php.conf > /dev/null <<'EOF'
+fastcgi_split_path_info ^(.+\.php)(/.+)$;
+include fastcgi_params;
+fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+fastcgi_param PATH_INFO $fastcgi_path_info;
+EOF
+```
+
+### D) Validate + reload (no restart)
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### E) Verify origin cert is correct (SNI)
+
+```bash
+echo | openssl s_client -connect 127.0.0.1:443 -servername garimela.com 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName
+echo | openssl s_client -connect 127.0.0.1:443 -servername admin.garimela.com 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName
+```
+
+### F) Check origin cert expiry (2041 expected)
+
+```bash
+openssl x509 -in /etc/nginx/ssl/garimela-origin.pem -noout -dates
+echo | openssl s_client -connect 127.0.0.1:443 -servername garimela.com 2>/dev/null | openssl x509 -noout -dates
+```
+
+### G) Confirm Strict path from server side (Cloudflare)
+
+```bash
+curl -I https://garimela.com
+curl -I https://admin.garimela.com
+```
+
+### H) Remove unused api vhost
+
+```bash
+sudo rm -f /etc/nginx/sites-enabled/api.garimela.com.conf
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### I) Confirm no warnings
+
+```bash
+sudo nginx -t 2>&1 | grep -i warn || echo "No warnings ✅"
+```
+
+---
+
+## Important Notes (Don’t get confused later)
+
+### Why browser doesn’t show 2041 expiry
+
+* Browser দেখায় **Cloudflare edge certificate** (Google Trust Services / WE1), যেটা 3 months-ish expiry
+* Origin-এর 2041 cert শুধু **Cloudflare ↔ Origin** এর জন্য
+
+---
+
+## Future Checks / Maintenance
+
+### 1) After any Nginx change
+
+Always run:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 2) If Full (Strict) breaks later
+
+* Cloudflare error codes:
+
+  * **525** handshake issue
+  * **526** invalid origin cert
+* Quick debug:
+
+```bash
+echo | openssl s_client -connect 127.0.0.1:443 -servername garimela.com 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName
+sudo nginx -T | grep -nE "listen 443|default_server|server_name|ssl_certificate" | head -n 240
+```
+
+### 3) If CloudPanel overwrites vhost configs
+
+* UI থেকে domain SSL/setting change করলে `.conf` overwrite হতে পারে
+* Overwrite হলে এই run book অনুযায়ী আবার 443 blocks restore করো
+
+### 4) Security hardening (later)
+
+We postponed:
+
+* **Authenticated Origin Pulls (recommended)** OR
+* **Cloudflare IP allowlist** (UFW rules + Cloudflare IP update maintenance)
+
+---
+
+## Rollback (Emergency)
+
+### Full rollback to previous Nginx backup
+
+```bash
+sudo rm -rf /etc/nginx
+sudo cp -a /root/backup-nginx-after-strict-2026-01-21/nginx /etc/nginx
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+(Older backup also exists: `/root/backup-nginx-2026-01-20/`)
+
+---
+
+## Current Status (Final)
+
+✅ Cloudflare: Full (Strict)
+✅ Origin cert: Valid till 2041
+✅ Site + Admin working
+✅ Nginx warnings: None
+✅ Backups: Before + After
+
+---
+
+তুমি চাইলে আমি এটাকে আরও ছোট করে **“Command-only Runbook”** বানিয়ে দিতে পারি (শুধু কমান্ড + কোন ফাইলে কী থাকবে)।
+Cloudflare edge cert (public view):
+
+echo | openssl s_client -connect garimela.com:443 -servername garimela.com 2>/dev/null | openssl x509 -noout -dates -issuer -subject
+
+
+Origin cert (server local view — তুমি করেছো):
+
+echo | openssl s_client -connect 127.0.0.1:443 -servername garimela.com 2>/dev/null | openssl x509 -noout -dates

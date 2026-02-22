@@ -1,5 +1,6 @@
 sqlplus /nolog;
 conn sys/sys123 as sysdba;
+conn SMSDB/SMSDB as sysdba;
 alter pluggable database all open;
 
 
@@ -17,7 +18,6 @@ alter system flush shared_pool;
 2. Connect sys database[conn sys/sys123 as sysdba]
 3. Show pdbs;
 4. alter pluggable database all open;
-
 5. alter session set "_ORACLE_SCRIPT"=true;
 
 6. create user TestDB identified by Test123;
@@ -81,6 +81,15 @@ ALTER USER LATE_POLICY DEFAULT TABLESPACE LATE_POLICY;
 ALTER USER LATE_POLICY QUOTA UNLIMITED ON LATE_POLICY;
 
 
+
+
+CREATE USER INSURANCE_SERVICE IDENTIFIED BY "RMLIT2026INC"
+  DEFAULT TABLESPACE users
+  TEMPORARY TABLESPACE temp
+  QUOTA UNLIMITED ON users;
+
+GRANT CREATE SESSION TO INSURANCE_SERVICE;
+GRANT CREATE TABLE, CREATE VIEW, CREATE SEQUENCE, CREATE PROCEDURE, CREATE TRIGGER TO INSURANCE_SERVICE;
 
 
 -- RML_TA_DA

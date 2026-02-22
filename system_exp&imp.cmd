@@ -10,12 +10,15 @@ impdp RESALE/resale@ORCL dumpfile=MYDATA.DMP directory=RESALE_ORACLE_DATABASE
 
 
 ==========================================================================================================
-expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_DEVELOPERS_mrg.dmp directory=DATA_PUMP_DIR
-expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_RESALE_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_WSHOP_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp LOYALTY/LOYALTYP@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_loyalty_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp COUPON_SERVICE/RMLIT2024CUP@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_coupon_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp DEV_PROCEDURE/RMLIT2024DEV@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_devpro_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp RML_TA_DA/RMLIT2025_TA_DA@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_ta_da_mrg.dmp directory=RESALE_DATA_PUMP_DIR
-expdp LEASE_TRANSFER/RML_IT_2025_LEASE@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_joy_ta_da_mrg.dmp directory=DATA_PUMP_DIR
-expdp  sys/test123@10.99.99.20:1525/ORCLPDB dumpfile=04_09_2025_sys_data.dmp directory=DATA_PUMP_DIR
+expdp DEVELOPERS/Test1234@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_DEVELOPERS_mrg.dmp directory=DATA_PUMP_DIR
+expdp RESALE/resale@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_RESALE_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp WSHOP/wshop123Test@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_WSHOP_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp LOYALTY/LOYALTYP@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_loyalty_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp COUPON_SERVICE/RMLIT2024CUP@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_coupon_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp DEV_PROCEDURE/RMLIT2024DEV@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_devpro_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp RML_TA_DA/RMLIT2025_TA_DA@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_ta_da_mrg.dmp directory=RESALE_DATA_PUMP_DIR
+expdp LEASE_TRANSFER/RML_IT_2025_LEASE@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_joy_ta_da_mrg.dmp directory=DATA_PUMP_DIR
+expdp  LATE_POLICY/RML_IT_2025_LATE@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_late_policy_data.dmp directory=DATA_PUMP_DIR
+
+
+expdp  sys/test123@10.99.99.20:1525/ORCLPDB dumpfile=22_01_2026_sys_data.dmp directory=DATA_PUMP_DIR
